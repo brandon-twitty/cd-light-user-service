@@ -1,0 +1,58 @@
+service: light-user-service
+frameworkVersion: ">=1.1.0 <2.0.0"
+provider:
+  name: aws
+  runtime: nodejs12.x
+  profile: carddate
+  stage: dev
+  #role: arn:aws:iam::933153212182:role/candidate-service-dev-sa-east-1-lambdaRole
+  region: us-east-2
+  environment:
+    tableName: ${self:custom.tableName}
+    twilioAccountSid: ${env:TWILIO_ACCOUNT_SID}
+    twilioAuthToken: ${env:TWILIO_AUTH_TOKEN}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+
+      Resource: '*'
+plugins:
+  - serverless-webpack
+  - serverless-dotenv-plugin
+#  - serverless-bundle
+package:
+  individually: true
+
+custom:
+  tableName: light_user
+functions:
+  createLightUser:
+    handler: lambda-endpoints/createLightUser.handler
+    events:
+      - http:
+          path: create-light-user/{ID}
+          method: POST
+          cors: true
+  startConversation:
+    handler: lambda-endpoints/startConversation.handler
+    events:
+      - http:
+          path: start-conversation/{ID}
+          method: POST
+          cors: true
+
+
+resources:
+  Resources:
+    MyDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: ID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST

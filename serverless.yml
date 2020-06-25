@@ -1,5 +1,10 @@
 service: light-user-service
 frameworkVersion: ">=1.1.0 <2.0.0"
+plugins:
+  - serverless-webpack
+  - serverless-dotenv-plugin
+  - serverless-mocha-plugin
+#  - serverless-bundle
 provider:
   name: aws
   runtime: nodejs12.x
@@ -17,16 +22,19 @@ provider:
         - dynamodb:*
 
       Resource: '*'
-plugins:
-  - serverless-webpack
-  - serverless-dotenv-plugin
-#  - serverless-bundle
 package:
   individually: true
 
 custom:
   tableName: light_user
 functions:
+  createConversation:
+    handler: lambda-endpoints/createConvo.handler
+    events:
+      - http:
+          path: create-conversation
+          method: POST
+          cors: true
   createLightUser:
     handler: lambda-endpoints/createLightUser.handler
     events:

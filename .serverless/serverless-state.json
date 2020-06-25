@@ -36,6 +36,12 @@
           "ServerlessDeploymentBucket": {
             "Type": "AWS::S3::Bucket"
           },
+          "CreateConversationLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/light-user-service-dev-createConversation"
+            }
+          },
           "CreateLightUserLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
@@ -89,6 +95,9 @@
                         ],
                         "Resource": [
                           {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/light-user-service-dev-createConversation:*"
+                          },
+                          {
                             "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/light-user-service-dev-createLightUser:*"
                           },
                           {
@@ -102,6 +111,9 @@
                           "logs:PutLogEvents"
                         ],
                         "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/light-user-service-dev-createConversation:*:*"
+                          },
                           {
                             "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/light-user-service-dev-createLightUser:*:*"
                           },
@@ -131,6 +143,51 @@
               }
             }
           },
+          "CreateConversationLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/light-user-service/dev/1592941649299-2020-06-23T19:47:29.299Z/createConversation.zip"
+              },
+              "FunctionName": "light-user-service-dev-createConversation",
+              "Handler": "lambda-endpoints/createConvo.handler",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              },
+              "Runtime": "nodejs12.x",
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "tableName": "light_user",
+                  "twilioAccountSid": "AC81ea16ec867a1fd9a781b51a20d8f7c6",
+                  "twilioAuthToken": "4ee58b3faa8b0c267f20d51cbf809a83",
+                  "TWILIO_ACCOUNT_SID": "AC81ea16ec867a1fd9a781b51a20d8f7c6",
+                  "TWILIO_AUTH_TOKEN": "4ee58b3faa8b0c267f20d51cbf809a83"
+                }
+              }
+            },
+            "DependsOn": [
+              "CreateConversationLogGroup",
+              "IamRoleLambdaExecution"
+            ]
+          },
+          "CreateConversationLambdaVersion26XwvZUrNmdETDJWkMDj8dmxkuyGzYScXCSuxguEeU": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "CreateConversationLambdaFunction"
+              },
+              "CodeSha256": "dHuEbHkhp/D3WTepIjk4AqVPwWavFcjLtEK5zCKdqSI="
+            }
+          },
           "CreateLightUserLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
@@ -138,7 +195,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/light-user-service/dev/1592353219739-2020-06-17T00:20:19.739Z/createLightUser.zip"
+                "S3Key": "serverless/light-user-service/dev/1592941649299-2020-06-23T19:47:29.299Z/createLightUser.zip"
               },
               "FunctionName": "light-user-service-dev-createLightUser",
               "Handler": "lambda-endpoints/createLightUser.handler",
@@ -183,7 +240,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/light-user-service/dev/1592353219739-2020-06-17T00:20:19.739Z/startConversation.zip"
+                "S3Key": "serverless/light-user-service/dev/1592941649299-2020-06-23T19:47:29.299Z/startConversation.zip"
               },
               "FunctionName": "light-user-service-dev-startConversation",
               "Handler": "lambda-endpoints/startConversation.handler",
@@ -211,14 +268,14 @@
               "IamRoleLambdaExecution"
             ]
           },
-          "StartConversationLambdaVersionV7N911mDjeLgkTQYAxEuj79lGgeUXyevGHyFkDbjgxo": {
+          "StartConversationLambdaVersionHc6utd7pdZgOK0kAGdqUz2mV7X3BHJD7buNnC98PQ7I": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "StartConversationLambdaFunction"
               },
-              "CodeSha256": "XYjs/Brm3VfT0MhLrFD6g0VjG4WfuR5HENJTXJKYV5c="
+              "CodeSha256": "F7X0z8A66/aG4+wvXkQr/eTkwNFfiRZ79yG7kJuCF+o="
             }
           },
           "ApiGatewayRestApi": {
@@ -229,6 +286,21 @@
                 "Types": [
                   "EDGE"
                 ]
+              }
+            }
+          },
+          "ApiGatewayResourceCreateDashconversation": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "create-conversation",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
               }
             }
           },
@@ -281,6 +353,52 @@
                 "Ref": "ApiGatewayResourceStartDashconversation"
               },
               "PathPart": "{ID}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodCreateDashconversationOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true,
+                    "method.response.header.Access-Control-Allow-Credentials": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'",
+                      "method.response.header.Access-Control-Allow-Credentials": "'false'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceCreateDashconversation"
+              },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
               }
@@ -378,6 +496,49 @@
               }
             }
           },
+          "ApiGatewayMethodCreateDashconversationPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceCreateDashconversation"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "CreateConversationLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
           "ApiGatewayMethodCreateDashlightDashuserIdVarPost": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
@@ -464,7 +625,7 @@
               "MethodResponses": []
             }
           },
-          "ApiGatewayDeployment1592353219794": {
+          "ApiGatewayDeployment1592941649349": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -473,9 +634,57 @@
               "StageName": "dev"
             },
             "DependsOn": [
+              "ApiGatewayMethodCreateDashconversationPost",
               "ApiGatewayMethodCreateDashlightDashuserIdVarPost",
               "ApiGatewayMethodStartDashconversationIdVarPost"
             ]
+          },
+          "CreateConversationLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "CreateConversationLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "apigateway.",
+                    {
+                      "Ref": "AWS::URLSuffix"
+                    }
+                  ]
+                ]
+              },
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
           },
           "CreateLightUserLambdaPermissionApiGateway": {
             "Type": "AWS::Lambda::Permission",
@@ -597,6 +806,12 @@
               "Ref": "ServerlessDeploymentBucket"
             }
           },
+          "CreateConversationLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "CreateConversationLambdaVersion26XwvZUrNmdETDJWkMDj8dmxkuyGzYScXCSuxguEeU"
+            }
+          },
           "CreateLightUserLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
@@ -606,7 +821,7 @@
           "StartConversationLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "StartConversationLambdaVersionV7N911mDjeLgkTQYAxEuj79lGgeUXyevGHyFkDbjgxo"
+              "Ref": "StartConversationLambdaVersionHc6utd7pdZgOK0kAGdqUz2mV7X3BHJD7buNnC98PQ7I"
             }
           },
           "ServiceEndpoint": {
@@ -653,9 +868,46 @@
     },
     "plugins": [
       "serverless-webpack",
-      "serverless-dotenv-plugin"
+      "serverless-dotenv-plugin",
+      "serverless-mocha-plugin"
     ],
     "functions": {
+      "createConversation": {
+        "handler": "lambda-endpoints/createConvo.handler",
+        "events": [
+          {
+            "http": {
+              "path": "create-conversation",
+              "method": "post",
+              "cors": {
+                "origins": [
+                  "*"
+                ],
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "POST"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "light-user-service-dev-createConversation",
+        "package": {
+          "artifact": ".serverless\\createConversation.zip"
+        },
+        "vpc": {}
+      },
       "createLightUser": {
         "handler": "lambda-endpoints/createLightUser.handler",
         "events": [
@@ -756,7 +1008,7 @@
   },
   "package": {
     "individually": true,
-    "artifactDirectoryName": "serverless/light-user-service/dev/1592353219739-2020-06-17T00:20:19.739Z",
+    "artifactDirectoryName": "serverless/light-user-service/dev/1592941649299-2020-06-23T19:47:29.299Z",
     "artifact": ""
   }
 }
